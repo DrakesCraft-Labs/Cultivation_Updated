@@ -25,9 +25,18 @@ import java.util.function.Consumer;
 
 public class TraderListener implements Listener {
 
+    private boolean isClasicoWorld(org.bukkit.World world) {
+        if (world == null) return false;
+        String name = world.getName().toLowerCase(java.util.Locale.ROOT);
+        return name.startsWith("clasico");
+    }
+
     @EventHandler
     public void onWanderingTraderSpawn(@Nonnull EntitySpawnEvent event) {
         if (event.getEntity() instanceof WanderingTrader trader) {
+            if (isClasicoWorld(trader.getWorld())) {
+                return;
+            }
             List<MerchantRecipe> recipes = new ArrayList<>(trader.getRecipes());
             addBreedingRecipe(recipes);
             addBushRecipe(recipes);
@@ -38,6 +47,9 @@ public class TraderListener implements Listener {
     @EventHandler
     public void onVillagerChangesProfession(@Nonnull VillagerCareerChangeEvent event) {
         Villager villager = event.getEntity();
+        if (isClasicoWorld(villager.getWorld())) {
+            return;
+        }
         if (event.getProfession() == Villager.Profession.FARMER) {
             Bukkit.getScheduler().runTaskLater(
                 Cultivation.getInstance(), () -> addRecipe(villager, this::addBushRecipe),
@@ -57,6 +69,9 @@ public class TraderListener implements Listener {
     }
 
     private void addRecipe(@Nonnull Villager villager, @Nonnull Consumer<List<MerchantRecipe>> consumer) {
+        if (!villager.isValid() || isClasicoWorld(villager.getWorld())) {
+            return;
+        }
         List<MerchantRecipe> recipes = new ArrayList<>(villager.getRecipes());
         consumer.accept(recipes);
         villager.setRecipes(recipes);
